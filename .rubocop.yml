@@ -1,0 +1,8 @@
+inherit_gem:
+  rubocop-cache-ventures: rubocop.yml
+
+# This is a CLI; writing to stdout is its job, not a Rails logging concern.
+Rails/Output:
+  Exclude:
+    - lib/ironclad/cli.rb
+    - exe/ironclad

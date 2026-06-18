@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Edit Credentials",
+      "type": "shell",
+      "command": "\"${SHELL:-/bin/zsh}\" -lic \"EDITOR='code --wait' VISUAL='code --wait' bin/ironclad edit ${input:credentialsEnv}\"",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 4
+      },
+      "presentation": {
+        "reveal": "never",
+        "revealProblems": "never",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": false,
+        "close": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "credentialsEnv",
+      "type": "pickString",
+      "description": "Which environment's credentials do you want to edit?",
+      "options": [<%= environments.map(&:inspect).join(', ') %>]
+    }
+  ]
+}
