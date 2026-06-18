@@ -39,3 +39,13 @@ jobs:
 
       - name: Publish to RubyGems
         uses: rubygems/release-gem@v1
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gem build ironclad.gemspec --output ironclad.gem
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            ironclad.gem
