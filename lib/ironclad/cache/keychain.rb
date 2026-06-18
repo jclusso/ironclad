@@ -12,7 +12,7 @@ module Ironclad
       end
 
       def read(name)
-        out, status = Open3.capture2(
+        out, _err, status = Open3.capture3(
           'security', 'find-generic-password',
           '-a', @account, '-s', name, '-w'
         )
