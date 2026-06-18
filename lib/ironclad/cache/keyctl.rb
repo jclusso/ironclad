@@ -8,6 +8,12 @@ module Ironclad
     # persists across this user's sessions and clears on reboot, at which point
     # a miss simply re-seeds from the source.
     class Keyctl
+      def self.available?
+        ENV['PATH'].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+          File.executable?(File.join(dir, 'keyctl'))
+        end
+      end
+
       def read(name)
         id, status = Open3.capture2('keyctl', 'search', '@u', 'user', name)
         return unless status.success?

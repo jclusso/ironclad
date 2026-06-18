@@ -7,41 +7,70 @@ on:
 
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    runs-on: ubuntu-latest
-    name: Ruby ${{ matrix.ruby }}
+    runs-on: ${{ matrix.os }}
+    name: Ruby ${{ matrix.ruby }} (${{ matrix.os }})
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
         ruby:
           - '3.3'
           - '3.4'
           - '4.0'
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
+
+      - name: Install keyutils
+        if: runner.os == 'Linux'
+        # Lock timeout waits out the runner's background apt jobs instead of
+        # blocking forever on the dpkg lock.
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update -o DPkg::Lock::Timeout=300
+          sudo apt-get install -y -o DPkg::Lock::Timeout=300 keyutils
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+
       - name: Run tests
-        run: bundle exec rake test
+        shell: bash
+        run: |
+          # Possess @u keys (a normal login does this via pam_keyinit; CI doesn't).
+          if [ "$RUNNER_OS" = "Linux" ]; then keyctl link @u @s; fi
+          bundle exec rake test
 
   lint:
     runs-on: ubuntu-latest
     name: Lint
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: true
+
       - name: Run RuboCop
         run: bundle exec rubocop

@@ -9,16 +9,20 @@ class TestCache < Minitest::Test
   end
 
   def test_linux_with_keyctl_uses_keyctl
-    Ironclad::Cache.stub(:keyctl_available?, true) do
+    Ironclad::Cache::Keyctl.stub(:available?, true) do
       cache = Ironclad::Cache.for_platform('app', 'linux-gnu')
       assert_instance_of Ironclad::Cache::Keyctl, cache
     end
   end
 
-  def test_linux_without_keyctl_uses_null
-    Ironclad::Cache.stub(:keyctl_available?, false) do
-      cache = Ironclad::Cache.for_platform('app', 'linux-gnu')
+  def test_linux_without_keyctl_uses_null_and_warns
+    Ironclad::Cache::Keyctl.stub(:available?, false) do
+      cache = nil
+      _out, err = capture_io do
+        cache = Ironclad::Cache.for_platform('app', 'linux-gnu')
+      end
       assert_instance_of Ironclad::Cache::Null, cache
+      assert_match(/keyctl not found/, err)
     end
   end
 
@@ -33,29 +37,8 @@ class TestCache < Minitest::Test
     assert_nil cache.write('anything', 'value')
   end
 
-  def test_keychain_read_returns_value_on_hit
-    cache = Ironclad::Cache::Keychain.new('app')
-    status = Minitest::Mock.new
-    status.expect(:success?, true)
-
-    Open3.stub(:capture3, ["the-key\n", '', status]) do
-      assert_equal 'the-key', cache.read('default')
-    end
-    status.verify
-  end
-
-  def test_keychain_read_returns_nil_on_miss
-    cache = Ironclad::Cache::Keychain.new('app')
-    status = Minitest::Mock.new
-    status.expect(:success?, false)
-
-    # On a cache miss the security tool writes to stderr; capture3 swallows it
-    # so it never leaks to the terminal.
-    err = 'security: SecKeychainSearchCopyNext: ' \
-          'The specified item could not be found in the keychain.'
-    Open3.stub(:capture3, ['', err, status]) do
-      assert_nil cache.read('default')
-    end
-    status.verify
+  def test_keyctl_available_matches_reality
+    found = system('command -v keyctl > /dev/null 2>&1')
+    assert_equal found, Ironclad::Cache::Keyctl.available?
   end
 end

@@ -15,14 +15,15 @@ module Ironclad
       when /darwin/
         Keychain.new(account)
       when /linux/
-        keyctl_available? ? Keyctl.new : Null.new
+        return Keyctl.new if Keyctl.available?
+
+        warn 'ironclad: keyctl not found, so key caching is disabled and keys ' \
+             'are fetched from the source every time. Install keyutils to ' \
+             'enable the kernel keyring cache.'
+        Null.new
       else
         Null.new
       end
-    end
-
-    def keyctl_available?
-      system('command -v keyctl', out: File::NULL, err: File::NULL)
     end
   end
 end
