@@ -1,5 +1,6 @@
 # Ironclad
 
+[![Gem Version](https://badge.fury.io/rb/ironclad.svg)](https://rubygems.org/gems/ironclad)
 [![CI](https://github.com/jclusso/ironclad/actions/workflows/ci.yml/badge.svg)](https://github.com/jclusso/ironclad/actions/workflows/ci.yml)
 
 Source your Rails credential keys from 1Password instead of committing them to
