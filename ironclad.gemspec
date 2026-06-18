@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
                      'disk. Ships a CLI, a Railtie that loads the development ' \
                      'key at boot, Capistrano helpers, and an install generator.'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.2.0'
+  spec.required_ruby_version = '>= 3.3.0'
 
   spec.metadata = {
     'allowed_push_host' => 'https://rubygems.org',
