@@ -12,6 +12,9 @@ require_relative 'ironclad/key_store'
 module Ironclad
   class Error < StandardError; end
 
+  GIT_DIFF_DRIVER = 'rails_credentials'
+  DIFF_COMMAND = 'bin/ironclad diff'
+
   class << self
     # Path to the project's ironclad.yml. Override before first use if needed.
     attr_writer :config_path
@@ -38,10 +41,25 @@ module Ironclad
       store.key(environment.to_s, refresh: refresh)
     end
 
+    def configure_git_diff!(command = DIFF_COMMAND)
+      return unless enrolled_in_git_diff?
+
+      system('git', 'config', "diff.#{GIT_DIFF_DRIVER}.textconv", command,
+             %i[out err] => File::NULL)
+    end
+
     # Reset memoized state (mainly for tests).
     def reset!
       @config = nil
       @store = nil
+    end
+
+    private
+
+    def enrolled_in_git_diff?
+      attributes = File.join(Dir.pwd, '.gitattributes')
+      File.file?(attributes) &&
+        File.read(attributes).include?("diff=#{GIT_DIFF_DRIVER}")
     end
   end
 end
