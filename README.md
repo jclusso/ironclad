@@ -11,7 +11,8 @@ Ironclad reads each environment's key (`master.key`, `production.key`) from
 Linux kernel keyring — so repeated use doesn't round-trip to 1Password. It
 ships:
 
-- a CLI for printing a key or editing credentials,
+- a CLI for printing a key, editing credentials, and keeping `git diff`
+  readable,
 - a Railtie that loads the current environment's key into `ENV` at boot,
 - Capistrano helpers so deploys need no key file, and
 - an install generator that wires it all into a Rails app.

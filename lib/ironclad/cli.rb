@@ -8,6 +8,7 @@ module Ironclad
   #
   #   ironclad [env] [--refresh]   print the credentials key (default env)
   #   ironclad edit [env]          edit Rails credentials for env
+  #   ironclad diff <file>         git textconv: decrypt a credentials file
   class CLI
     def self.start(argv)
       new(argv).run
@@ -22,6 +23,9 @@ module Ironclad
       when 'edit'
         @argv.shift
         edit(@argv.shift || 'default')
+      when 'diff'
+        @argv.shift
+        diff(@argv.shift)
       when '-h', '--help', 'help'
         print_help
       else
@@ -45,10 +49,18 @@ module Ironclad
     def edit(env)
       validate_env!(env)
       ENV['RAILS_MASTER_KEY'] = Ironclad.key(env)
+      Ironclad.configure_git_diff!
 
       args = ['credentials:edit']
       args.push('-e', env) unless env == 'default'
       exec('bin/rails', *args)
+    end
+
+    def diff(path)
+      raise Error, 'Usage: ironclad diff <file>' unless path
+
+      require_relative 'diff'
+      Diff.call(path)
     end
 
     def validate_env!(env)
@@ -65,6 +77,7 @@ module Ironclad
         Usage:
           ironclad [env] [--refresh]   print the credentials key (env: default)
           ironclad edit [env]          edit Rails credentials for env
+          ironclad diff <file>         git textconv: decrypt a credentials file
           ironclad --help              show this help
 
         --refresh re-reads from the source after a key rotation.
