@@ -44,6 +44,9 @@ module Ironclad
       env = @argv.shift || 'default'
       validate_env!(env)
       puts Ironclad.key(env, refresh: refresh)
+    rescue CacheWriteError => e
+      puts e.key
+      raise
     end
 
     def edit(env)

@@ -117,6 +117,34 @@ class TestIronclad < Minitest::Test
     assert_equal 'rotated-key', cache.store['acme-credentials-default']
   end
 
+  def test_key_store_returns_fetched_value_when_cache_write_fails
+    cache = FailingCache.new
+    source = FakeSource.new('op://Vault/acme/master.key' => 'fresh-key')
+    store = Ironclad::KeyStore.new(@config, cache: cache, source: source)
+
+    assert_equal 'fresh-key', store.key('default')
+  end
+
+  def test_key_store_refresh_raises_when_cache_write_fails
+    cache = FailingCache.new
+    source = FakeSource.new('op://Vault/acme/master.key' => 'fresh-key')
+    store = Ironclad::KeyStore.new(@config, cache: cache, source: source)
+
+    error = assert_raises(Ironclad::CacheWriteError) do
+      store.key('default', refresh: true)
+    end
+    assert_match(/Could not cache refreshed credentials key/, error.message)
+    assert_equal 'fresh-key', error.key
+  end
+
+  def test_key_store_refresh_accepts_a_cache_with_nowhere_to_store_keys
+    cache = Ironclad::Cache::Null.new
+    source = FakeSource.new('op://Vault/acme/master.key' => 'fresh-key')
+    store = Ironclad::KeyStore.new(@config, cache: cache, source: source)
+
+    assert_equal 'fresh-key', store.key('default', refresh: true)
+  end
+
   def test_key_store_treats_empty_cache_as_miss
     cache = FakeCache.new('acme-credentials-default' => '')
     source = FakeSource.new('op://Vault/acme/master.key' => 'real-key')
@@ -149,5 +177,11 @@ class TestIronclad < Minitest::Test
       @reads += 1
       @refs.fetch(reference)
     end
+  end
+
+  class FailingCache
+    def read(_name) = nil
+
+    def write(_name, _key) = false
   end
 end

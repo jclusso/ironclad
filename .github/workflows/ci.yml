@@ -50,11 +50,7 @@ jobs:
           bundler-cache: true
 
       - name: Run tests
-        shell: bash
-        run: |
-          # Possess @u keys (a normal login does this via pam_keyinit; CI doesn't).
-          if [ "$RUNNER_OS" = "Linux" ]; then keyctl link @u @s; fi
-          bundle exec rake test
+        run: bundle exec rake test
 
   lint:
     runs-on: ubuntu-latest
