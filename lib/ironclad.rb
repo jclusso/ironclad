@@ -12,17 +12,6 @@ require_relative 'ironclad/key_store'
 module Ironclad
   class Error < StandardError; end
 
-  # Raised when an explicit refresh fetched the key but could not cache it. The
-  # key is still valid, so callers can report the failure and use it anyway.
-  class CacheWriteError < Error
-    attr_reader :key
-
-    def initialize(message, key)
-      super(message)
-      @key = key
-    end
-  end
-
   GIT_DIFF_DRIVER = 'rails_credentials'
   DIFF_COMMAND = 'bin/ironclad diff'
 

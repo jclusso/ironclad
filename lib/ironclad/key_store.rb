@@ -24,10 +24,8 @@ module Ironclad
       fetched = @source.read(@config.reference(environment))
       cached = @cache.write(name, fetched)
       if refresh && !cached
-        raise CacheWriteError.new(
-          "Could not cache refreshed credentials key for #{environment}",
-          fetched
-        )
+        raise Error,
+              "Could not cache refreshed credentials key for #{environment}"
       end
 
       fetched

@@ -42,6 +42,7 @@ module Ironclad
 
           Print a key:      bin/ironclad [env]
           Edit credentials: bin/ironclad edit [env]
+          After a rotation: bin/ironclad refresh [env]
         MESSAGE
       end
 
