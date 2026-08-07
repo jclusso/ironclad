@@ -22,11 +22,13 @@ module Ironclad
       def write(name, key)
         # The key passes via argv (briefly visible to the same user's `ps`); the
         # security tool has no stdin input mode. Acceptable for a local cache.
+        # system returns nil when `security` cannot be executed at all, which is
+        # a failure to cache just as much as a non-zero exit is.
         system(
           'security', 'add-generic-password', '-U',
           '-a', @account, '-s', name, '-w', key,
           out: File::NULL, err: File::NULL
-        )
+        ) || false
       end
     end
   end

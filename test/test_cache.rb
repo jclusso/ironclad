@@ -31,10 +31,10 @@ class TestCache < Minitest::Test
     assert_instance_of Ironclad::Cache::Null, cache
   end
 
-  def test_null_cache_reads_and_writes_nil
+  def test_null_cache_misses_and_reports_writes_as_successful
     cache = Ironclad::Cache::Null.new
     assert_nil cache.read('anything')
-    assert_nil cache.write('anything', 'value')
+    assert cache.write('anything', 'value')
   end
 
   def test_keyctl_available_matches_reality

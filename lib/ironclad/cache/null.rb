@@ -7,7 +7,7 @@ module Ironclad
     class Null
       def read(_name) = nil
 
-      def write(_name, _key) = nil
+      def write(_name, _key) = true
     end
   end
 end

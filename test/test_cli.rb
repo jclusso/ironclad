@@ -36,6 +36,27 @@ class TestCLI < Minitest::Test
     assert captured[:refresh]
   end
 
+  def test_refresh_cache_failure_prints_the_key_and_returns_one
+    failure = lambda do |_env, refresh: false|
+      assert refresh
+      raise Ironclad::CacheWriteError.new(
+        'Could not cache refreshed credentials key', 'fresh-key'
+      )
+    end
+
+    code = nil
+    with_config(%w[default]) do
+      Ironclad.stub(:key, failure) do
+        out, error = capture_io do
+          code = Ironclad::CLI.start(['default', '--refresh'])
+        end
+        assert_equal 'fresh-key', out.chomp
+        assert_match(/Could not cache refreshed credentials key/, error)
+      end
+    end
+    assert_equal 1, code
+  end
+
   def test_unknown_env_warns_and_returns_one
     code = nil
     with_config(%w[default]) do
