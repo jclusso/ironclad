@@ -25,8 +25,9 @@ ships:
 2. On a miss, read it from 1Password (`op read`) and seed the cache.
 
 The cache never expires. After rotating a key, refresh it with
-`bin/ironclad <env> --refresh`. Platforms with no supported keystore simply
-fetch from 1Password every call.
+`bin/ironclad refresh <env>`, or refresh every environment at once with
+`bin/ironclad refresh --all`. Platforms with no supported keystore simply fetch
+from 1Password every call.
 
 ## Requirements
 
@@ -81,10 +82,12 @@ keys:
 ### CLI
 
 ```sh
-bin/ironclad                      # print the development key
-bin/ironclad production           # print the production key
-bin/ironclad production --refresh # bypass the cache after a rotation
-bin/ironclad edit staging         # edit staging credentials in your editor
+bin/ironclad                    # print the development key
+bin/ironclad production         # print the production key
+bin/ironclad refresh            # re-cache the development key after a rotation
+bin/ironclad refresh production # re-cache production's key
+bin/ironclad refresh --all      # re-cache every configured environment's key
+bin/ironclad edit staging       # edit staging credentials in your editor
 ```
 
 ### Capistrano

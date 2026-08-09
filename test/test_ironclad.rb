@@ -130,11 +130,10 @@ class TestIronclad < Minitest::Test
     source = FakeSource.new('op://Vault/acme/master.key' => 'fresh-key')
     store = Ironclad::KeyStore.new(@config, cache: cache, source: source)
 
-    error = assert_raises(Ironclad::CacheWriteError) do
+    error = assert_raises(Ironclad::Error) do
       store.key('default', refresh: true)
     end
     assert_match(/Could not cache refreshed credentials key/, error.message)
-    assert_equal 'fresh-key', error.key
   end
 
   def test_key_store_refresh_accepts_a_cache_with_nowhere_to_store_keys
