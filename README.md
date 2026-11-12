@@ -116,6 +116,14 @@ bundle exec rubocop    # lint
 bin/console            # interactive prompt
 ```
 
+### Cutting a release
+
+Run `bundle exec rake "release:prepare[x.y.z]"` on an up to date `master` with
+a clean tree, then `git push --follow-tags`. It runs the tests and RuboCop,
+bumps `lib/ironclad/version.rb`, updates `Gemfile.lock`, commits, and tags
+`vx.y.z`. Pushing the tag triggers the release workflow, which publishes to
+RubyGems and creates the GitHub release.
+
 ## License
 
 Available as open source under the [MIT License](https://opensource.org/licenses/MIT).

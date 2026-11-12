@@ -13,22 +13,36 @@ task default: %i[test rubocop]
 
 VERSION_FILE = 'lib/ironclad/version.rb'
 
-desc 'Bump VERSION, update Gemfile.lock, commit, and tag (then: git push --follow-tags)'
-task :bump do
-  version = ENV['VERSION']
-  abort 'Usage: rake bump VERSION=1.2.3' unless version
-  abort "Invalid version: #{version}" unless version.match?(/\A\d+\.\d+\.\d+\z/)
-  abort 'Working tree is dirty. Commit or stash first.' unless `git status --porcelain`.strip.empty?
+namespace :release do
+  desc 'Check, bump, commit, and tag a release, e.g. rake release:prepare[1.2.3]'
+  task :prepare, [:version] do |_, args|
+    version = args[:version].to_s
+    tag = "v#{version}"
+    abort 'error: version must be x.y.z' unless version.match?(/\A\d+\.\d+\.\d+\z/)
+    abort 'error: working tree not clean' unless `git status --porcelain`.empty?
+    abort 'error: release from master' unless `git branch --show-current`.strip == 'master'
 
-  contents = File.read(VERSION_FILE)
-  updated = contents.sub(/VERSION = '[^']*'/, "VERSION = '#{version}'")
-  abort "Could not find VERSION in #{VERSION_FILE}" if updated == contents
-  File.write(VERSION_FILE, updated)
+    sh 'git fetch -q --tags origin master'
+    unless `git rev-parse HEAD` == `git rev-parse origin/master`
+      abort 'error: master is not in sync with origin'
+    end
 
-  sh 'bundle install'
-  sh 'git', 'add', VERSION_FILE, 'Gemfile.lock'
-  sh 'git', 'commit', '-m', "v#{version}"
-  sh 'git', 'tag', "v#{version}"
+    current = Bundler::GemHelper.instance.gemspec.version
+    unless Gem::Version.new(version) > current
+      abort "error: version must be greater than #{current}"
+    end
+    abort "error: tag #{tag} already exists" unless `git tag -l #{tag}`.empty?
 
-  puts "\nTagged v#{version}. Push with:\n  git push --follow-tags"
+    Rake::Task[:test].invoke
+    Rake::Task[:rubocop].invoke
+
+    contents = File.read(VERSION_FILE)
+    File.write(VERSION_FILE, contents.sub(/VERSION = '.*'/, "VERSION = '#{version}'"))
+    # Gemfile.lock records the gem's own version, so it changes with the bump.
+    sh 'bundle install --quiet'
+    sh 'git', 'commit', '-q', '-m', tag, VERSION_FILE, 'Gemfile.lock'
+    # Annotated, because `git push --follow-tags` skips lightweight tags.
+    sh 'git', 'tag', '-a', tag, '-m', tag
+    puts "Tagged #{tag}. Push the commit and tag to release: git push --follow-tags"
+  end
 end

@@ -3,46 +3,61 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: read
 
 jobs:
   release:
+    name: Release
     runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 15
     permissions:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      - name: Install keyutils
+        # Lock timeout waits out the runner's background apt jobs instead of
+        # blocking forever on the dpkg lock.
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update -o DPkg::Lock::Timeout=300
+          sudo apt-get install -y -o DPkg::Lock::Timeout=300 keyutils
+
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
           ruby-version: '3.4'
           bundler-cache: true
 
-      - name: Verify tag matches Ironclad::VERSION
+      - name: Check tag matches version.rb
         run: |
-          tag="${GITHUB_REF_NAME#v}"
-          gem_version="$(ruby -r ./lib/ironclad/version -e 'print Ironclad::VERSION')"
-          if [ "$tag" != "$gem_version" ]; then
-            echo "::error::Tag v$tag does not match Ironclad::VERSION $gem_version."
+          version="$(ruby -r ./lib/ironclad/version -e 'print Ironclad::VERSION')"
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version.rb version $version. Run 'bundle exec rake release:prepare[x.y.z]'."
             exit 1
           fi
 
-      - name: Publish to RubyGems
-        uses: rubygems/release-gem@v1
+      - name: Run tests
+        run: bundle exec rake test
 
-      - name: Create GitHub Release
+      - name: Publish to RubyGems
+        uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1
+
+      - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gem build ironclad.gemspec --output ironclad.gem
           gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             ironclad.gem
