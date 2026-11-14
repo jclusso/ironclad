@@ -24,6 +24,8 @@ module Ironclad
         end
 
         out.chomp
+      rescue Errno::ENOENT
+        raise Error, '1Password CLI (op) not found. Install it and run: op signin'
       end
     end
   end
