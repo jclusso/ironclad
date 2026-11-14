@@ -19,8 +19,7 @@ module Ironclad
       # Don't abort boot if the credential source is unavailable (e.g. `op` not
       # signed in or installed). Rails surfaces its own missing-key error later
       # only if credentials are actually accessed.
-      warn "Ironclad: could not load credentials key (#{e.message}). " \
-           'Try `op signin` or set RAILS_MASTER_KEY.'
+      warn "Ironclad: could not load credentials key (#{e.message}). Or set RAILS_MASTER_KEY."
     end
   end
 end
